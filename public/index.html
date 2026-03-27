@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>口コミジェネレーター</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;500;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #F7F3EC;
+      --ink: #1A1612;
+      --ink-muted: #6B5E52;
+      --accent: #C4440A;
+      --accent-light: #F2E8E0;
+      --border: #D8CFC4;
+      --white: #FFFFFF;
+      --chip-bg: #EDE8E0;
+      --chip-active-bg: #C4440A;
+      --chip-active-text: #FFFFFF;
+    }
+
+    body {
+      font-family: 'Noto Serif JP', serif;
+      background: var(--bg);
+      color: var(--ink);
+      min-height: 100vh;
+      padding: 24px 16px 64px;
+    }
+
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 36px;
+    }
+
+    .header-label {
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 0.15em;
+      color: var(--ink-muted);
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+
+    h1 {
+      font-size: 24px;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      color: var(--ink);
+    }
+
+    h1 span {
+      color: var(--accent);
+    }
+
+    .section {
+      margin-bottom: 28px;
+    }
+
+    label {
+      display: block;
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--ink-muted);
+      margin-bottom: 10px;
+    }
+
+    .field-num {
+      display: inline-block;
+      background: var(--accent);
+      color: var(--white);
+      font-family: 'DM Mono', monospace;
+      font-size: 10px;
+      padding: 1px 6px;
+      border-radius: 3px;
+      margin-right: 6px;
+    }
+
+    input[type="text"],
+    textarea {
+      width: 100%;
+      background: var(--white);
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      padding: 12px 14px;
+      font-family: 'Noto Serif JP', serif;
+      font-size: 15px;
+      color: var(--ink);
+      outline: none;
+      transition: border-color 0.2s;
+      -webkit-appearance: none;
+    }
+
+    input[type="text"]:focus,
+    textarea:focus {
+      border-color: var(--accent);
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 90px;
+    }
+
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .chip {
+      font-family: 'DM Mono', monospace;
+      font-size: 12px;
+      padding: 7px 14px;
+      border-radius: 99px;
+      background: var(--chip-bg);
+      color: var(--ink);
+      border: 1.5px solid transparent;
+      cursor: pointer;
+      user-select: none;
+      transition: background 0.15s, color 0.15s, border-color 0.15s;
+    }
+
+    .chip:hover {
+      border-color: var(--accent);
+    }
+
+    .chip.active {
+      background: var(--chip-active-bg);
+      color: var(--chip-active-text);
+      border-color: var(--chip-active-bg);
+    }
+
+    /* Star rating */
+    .stars {
+      display: flex;
+      gap: 6px;
+    }
+
+    .star {
+      font-size: 28px;
+      cursor: pointer;
+      color: var(--border);
+      transition: color 0.15s, transform 0.1s;
+      line-height: 1;
+    }
+
+    .star.active {
+      color: var(--accent);
+    }
+
+    .star:hover {
+      transform: scale(1.15);
+    }
+
+    /* Generate button */
+    .btn-generate {
+      width: 100%;
+      padding: 16px;
+      background: var(--accent);
+      color: var(--white);
+      border: none;
+      border-radius: 10px;
+      font-family: 'Noto Serif JP', serif;
+      font-size: 16px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.1s;
+      margin-top: 8px;
+    }
+
+    .btn-generate:hover:not(:disabled) {
+      opacity: 0.88;
+    }
+
+    .btn-generate:active:not(:disabled) {
+      transform: scale(0.98);
+    }
+
+    .btn-generate:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    /* Output area */
+    .output-area {
+      display: none;
+      margin-top: 36px;
+      padding-top: 32px;
+      border-top: 1.5px solid var(--border);
+    }
+
+    .output-area.visible {
+      display: block;
+    }
+
+    .output-label {
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--ink-muted);
+      margin-bottom: 14px;
+    }
+
+    .output-stars {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 14px;
+    }
+
+    .output-stars .star {
+      font-size: 18px;
+      cursor: default;
+    }
+
+    .output-stars .star:hover {
+      transform: none;
+    }
+
+    .review-text {
+      background: var(--white);
+      border: 1.5px solid var(--border);
+      border-radius: 10px;
+      padding: 20px;
+      font-size: 15px;
+      line-height: 1.85;
+      white-space: pre-wrap;
+      color: var(--ink);
+      min-height: 60px;
+    }
+
+    /* Loading dots */
+    .loading-dots {
+      display: inline-block;
+    }
+
+    .loading-dots::after {
+      content: '';
+      animation: dots 1.2s steps(4, end) infinite;
+    }
+
+    @keyframes dots {
+      0%   { content: ''; }
+      25%  { content: '.'; }
+      50%  { content: '..'; }
+      75%  { content: '...'; }
+      100% { content: ''; }
+    }
+
+    /* Action buttons */
+    .action-row {
+      display: flex;
+      gap: 8px;
+      margin-top: 16px;
+      flex-wrap: wrap;
+    }
+
+    .btn-action {
+      font-family: 'DM Mono', monospace;
+      font-size: 12px;
+      padding: 9px 16px;
+      border-radius: 8px;
+      border: 1.5px solid var(--border);
+      background: var(--white);
+      color: var(--ink);
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s;
+      white-space: nowrap;
+    }
+
+    .btn-action:hover:not(:disabled) {
+      background: var(--accent-light);
+      border-color: var(--accent);
+    }
+
+    .btn-action:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+
+    .btn-alt {
+      margin-left: auto;
+    }
+
+    .btn-copy {
+      width: 100%;
+      margin-top: 10px;
+      padding: 12px;
+      background: var(--ink);
+      color: var(--white);
+      border: none;
+      border-radius: 8px;
+      font-family: 'DM Mono', monospace;
+      font-size: 13px;
+      letter-spacing: 0.05em;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+
+    .btn-copy:hover {
+      opacity: 0.82;
+    }
+
+    .copy-feedback {
+      text-align: center;
+      font-family: 'DM Mono', monospace;
+      font-size: 12px;
+      color: var(--accent);
+      margin-top: 8px;
+      height: 18px;
+    }
+
+    .divider {
+      height: 1.5px;
+      background: var(--border);
+      margin: 32px 0;
+    }
+
+    @media (max-width: 400px) {
+      .btn-alt {
+        margin-left: 0;
+      }
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <p class="header-label">Google Maps Review</p>
+    <h1>口コミ<span>ジェネレーター</span></h1>
+  </header>
+
+  <!-- 01 店名 -->
+  <div class="section">
+    <label><span class="field-num">01</span>お店の名前</label>
+    <input type="text" id="shop" placeholder="例：ビストロ 赤い屋根" />
+  </div>
+
+  <!-- 02 ジャンル -->
+  <div class="section">
+    <label><span class="field-num">02</span>ジャンル</label>
+    <div class="chips" id="genre-chips">
+      <span class="chip" data-value="和食">和食</span>
+      <span class="chip" data-value="イタリアン">イタリアン</span>
+      <span class="chip" data-value="フレンチ">フレンチ</span>
+      <span class="chip" data-value="中華">中華</span>
+      <span class="chip" data-value="ラーメン">ラーメン</span>
+      <span class="chip" data-value="焼肉">焼肉</span>
+      <span class="chip" data-value="寿司">寿司</span>
+      <span class="chip" data-value="カフェ">カフェ</span>
+      <span class="chip" data-value="居酒屋">居酒屋</span>
+      <span class="chip" data-value="バー">バー</span>
+      <span class="chip" data-value="スイーツ">スイーツ</span>
+      <span class="chip" data-value="エスニック">エスニック</span>
+    </div>
+  </div>
+
+  <!-- 03 料理 -->
+  <div class="section">
+    <label><span class="field-num">03</span>頼んだメニュー</label>
+    <input type="text" id="dish" placeholder="例：トリュフパスタ、牛ほほ肉の赤ワイン煮" />
+  </div>
+
+  <!-- 04 感想 -->
+  <div class="section">
+    <label><span class="field-num">04</span>食感・味・香りの感想</label>
+    <textarea id="taste" placeholder="例：もちもちで、こっくり濃厚。トリュフの香りがふわっと広がる"></textarea>
+  </div>
+
+  <!-- 05 雰囲気 -->
+  <div class="section">
+    <label><span class="field-num">05</span>空間・雰囲気</label>
+    <div class="chips" id="vibe-chips">
+      <span class="chip" data-value="落ち着いてる">落ち着いてる</span>
+      <span class="chip" data-value="おしゃれ">おしゃれ</span>
+      <span class="chip" data-value="賑やか">賑やか</span>
+      <span class="chip" data-value="隠れ家感">隠れ家感</span>
+      <span class="chip" data-value="デート向き">デート向き</span>
+      <span class="chip" data-value="女子会向き">女子会向き</span>
+      <span class="chip" data-value="カジュアル">カジュアル</span>
+      <span class="chip" data-value="高級感">高級感</span>
+      <span class="chip" data-value="テラス席あり">テラス席あり</span>
+    </div>
+  </div>
+
+  <!-- 06 コスパ -->
+  <div class="section">
+    <label><span class="field-num">06</span>コスパ感</label>
+    <div class="chips" id="value-chips" data-single="true">
+      <span class="chip" data-value="〜2000円 激コスパ">〜2000円 激コスパ</span>
+      <span class="chip" data-value="2〜4000円 コスパ良">2〜4000円 コスパ良</span>
+      <span class="chip" data-value="4〜8000円 適正">4〜8000円 適正</span>
+      <span class="chip" data-value="8000円〜 納得の価値">8000円〜 納得の価値</span>
+      <span class="chip" data-value="高いけど価値ある">高いけど価値ある</span>
+    </div>
+  </div>
+
+  <!-- 07 評価 -->
+  <div class="section">
+    <label><span class="field-num">07</span>総合評価</label>
+    <div class="stars" id="star-input">
+      <span class="star" data-value="1">★</span>
+      <span class="star" data-value="2">★</span>
+      <span class="star" data-value="3">★</span>
+      <span class="star" data-value="4">★</span>
+      <span class="star" data-value="5">★</span>
+    </div>
+  </div>
+
+  <!-- 08 トーン -->
+  <div class="section">
+    <label><span class="field-num">08</span>口コミのトーン</label>
+    <div class="chips" id="tone-chips" data-single="true">
+      <span class="chip active" data-value="テンション高め">テンション高め</span>
+      <span class="chip" data-value="落ち着いた丁寧">落ち着いた丁寧</span>
+      <span class="chip" data-value="友達に話す感じ">友達に話す感じ</span>
+      <span class="chip" data-value="グルメ通っぽい">グルメ通っぽい</span>
+    </div>
+  </div>
+
+  <button class="btn-generate" id="btn-generate">口コミを生成する →</button>
+
+  <!-- 出力エリア -->
+  <div class="output-area" id="output-area">
+    <p class="output-label">生成された口コミ</p>
+    <div class="output-stars" id="output-stars"></div>
+    <div class="review-text" id="review-text"></div>
+
+    <div class="action-row">
+      <button class="btn-action" id="btn-short">短く</button>
+      <button class="btn-action" id="btn-long">詳しく</button>
+      <button class="btn-action" id="btn-ono">オノマトペ↑</button>
+      <button class="btn-action btn-alt" id="btn-alt">別パターン</button>
+    </div>
+
+    <button class="btn-copy" id="btn-copy">コピーする</button>
+    <p class="copy-feedback" id="copy-feedback"></p>
+  </div>
+</div>
+
+<script>
+  // --- State ---
+  let rating = 0;
+  let currentReview = '';
+
+  // --- Multi-select chips ---
+  document.querySelectorAll('.chips:not([data-single])').forEach(group => {
+    group.addEventListener('click', e => {
+      const chip = e.target.closest('.chip');
+      if (!chip) return;
+      chip.classList.toggle('active');
+    });
+  });
+
+  // --- Single-select chips ---
+  document.querySelectorAll('.chips[data-single]').forEach(group => {
+    group.addEventListener('click', e => {
+      const chip = e.target.closest('.chip');
+      if (!chip) return;
+      group.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+      chip.classList.add('active');
+    });
+  });
+
+  // --- Star rating ---
+  const starEls = document.querySelectorAll('#star-input .star');
+  starEls.forEach(star => {
+    star.addEventListener('mouseover', () => highlightStars(+star.dataset.value));
+    star.addEventListener('mouseout', () => highlightStars(rating));
+    star.addEventListener('click', () => {
+      rating = +star.dataset.value;
+      highlightStars(rating);
+    });
+  });
+
+  function highlightStars(n) {
+    starEls.forEach(s => s.classList.toggle('active', +s.dataset.value <= n));
+  }
+
+  // --- Collect form data ---
+  function getFormData() {
+    const genre = [...document.querySelectorAll('#genre-chips .chip.active')].map(c => c.dataset.value).join('・');
+    const vibe  = [...document.querySelectorAll('#vibe-chips .chip.active')].map(c => c.dataset.value).join('・');
+    const value = document.querySelector('#value-chips .chip.active')?.dataset.value || '';
+    const tone  = document.querySelector('#tone-chips .chip.active')?.dataset.value || 'テンション高め';
+
+    return {
+      shop:   document.getElementById('shop').value.trim(),
+      genre,
+      dish:   document.getElementById('dish').value.trim(),
+      taste:  document.getElementById('taste').value.trim(),
+      vibe,
+      value,
+      rating,
+      tone,
+    };
+  }
+
+  // --- Validate ---
+  function isValid(data) {
+    return data.shop || data.dish || data.taste;
+  }
+
+  // --- Generate ---
+  async function generate(mode = 'default') {
+    const data = getFormData();
+    if (!isValid(data)) {
+      alert('店名・料理・感想のいずれか1つを入力してください。');
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const res = await fetch('/api/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...data, mode }),
+      });
+
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'エラーが発生しました');
+
+      currentReview = json.review;
+      showOutput(currentReview, data.rating);
+    } catch (err) {
+      alert(err.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  function setLoading(loading) {
+    const btn = document.getElementById('btn-generate');
+    const reviewText = document.getElementById('review-text');
+    const actionBtns = document.querySelectorAll('.btn-action');
+
+    btn.disabled = loading;
+    btn.textContent = loading ? '生成中...' : '口コミを生成する →';
+    actionBtns.forEach(b => b.disabled = loading);
+
+    if (loading) {
+      document.getElementById('output-area').classList.add('visible');
+      reviewText.innerHTML = '<span class="loading-dots"></span>';
+      document.getElementById('output-stars').innerHTML = '';
+    }
+  }
+
+  function showOutput(text, stars) {
+    document.getElementById('review-text').textContent = text;
+
+    const starsEl = document.getElementById('output-stars');
+    starsEl.innerHTML = '';
+    if (stars > 0) {
+      for (let i = 1; i <= 5; i++) {
+        const s = document.createElement('span');
+        s.className = 'star' + (i <= stars ? ' active' : '');
+        s.textContent = '★';
+        starsEl.appendChild(s);
+      }
+    }
+
+    document.getElementById('copy-feedback').textContent = '';
+  }
+
+  // --- Buttons ---
+  document.getElementById('btn-generate').addEventListener('click', () => generate('default'));
+  document.getElementById('btn-short').addEventListener('click', () => generate('short'));
+  document.getElementById('btn-long').addEventListener('click', () => generate('long'));
+  document.getElementById('btn-ono').addEventListener('click', () => generate('ono'));
+  document.getElementById('btn-alt').addEventListener('click', () => generate('alt'));
+
+  document.getElementById('btn-copy').addEventListener('click', async () => {
+    if (!currentReview) return;
+    try {
+      await navigator.clipboard.writeText(currentReview);
+      const fb = document.getElementById('copy-feedback');
+      fb.textContent = 'コピーしました！';
+      setTimeout(() => { fb.textContent = ''; }, 2000);
+    } catch {
+      alert('コピーに失敗しました。手動でコピーしてください。');
+    }
+  });
+</script>
+</body>
+</html>
