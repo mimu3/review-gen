@@ -62,6 +62,6 @@ ${modeInstruction[selectedMode]}
     res.json({ review: response.content[0].text });
   } catch (err) {
     console.error('Claude API error:', err);
-    res.status(500).json({ error: 'レビュー生成に失敗しました。APIキーを確認してください。' });
+    res.status(500).json({ error: err.message || 'レビュー生成に失敗しました。APIキーを確認してください。' });
   }
 };
